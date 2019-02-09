@@ -16,6 +16,7 @@ void print_board(const char board[][8], const char placeable[][8]);
 void calc_board(char board[][8], char placeable[][8], const int turn);
 int get_move(const char placeable[][8], int *is_place, int *skip);
 void place_piece(char board[][8], const int place, int *turn);
+void print_winner(const char board[][8]);
 
 /* for debugging */
 void print_placeable(char placeable[][8]);
@@ -27,6 +28,8 @@ int main(void)
 
 	int turn, is_place, run, skip;
 	int place;
+
+	int i, j;
 
 	/* 처음 보드 초기화 */
 	init_board(board, &turn, &skip);
@@ -65,6 +68,8 @@ int main(void)
 			place_piece(board, place, &turn);
 		}
 	}
+
+
 
 	return 0;
 }
@@ -519,7 +524,7 @@ void place_piece(char board[][8], const int place, int *turn)
 
 	board[row][column] = piece;
 
-	*turn = *turn ? BLACK_TURN : WHITE_TURN;
+	*turn = (*turn) ? BLACK_TURN : WHITE_TURN;
 }
 
 /* debugging function */
@@ -543,4 +548,31 @@ void print_placeable(char placeable[][8])
 	}
 
 	printf("\n\n");
+}
+
+void print_winner(const char board[][8])
+{
+	int i, j;
+	int black, white;
+
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (board[i][j] == BLACK_PIECE)
+				black++;
+			if (board[i][j] == WHITE_PIECE)
+				white++;
+		}
+	}
+
+	if (black > white) {
+		printf("BLACK WIN!!\n");
+	}
+
+	else if (black == white) {
+		printf("DRAW!\n");
+	}
+
+	else {
+		printf("WHITE WIN!!\n");
+	}
 }
