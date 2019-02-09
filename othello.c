@@ -295,12 +295,12 @@ int get_move(const char placeable[][8], int *is_place, int *skip) {
 	if (move[0] >= 'A' && move[0] <= 'Z')
 		move[0] += 'a' - 'A';
 
-	if (move[0] <= 'a' || move[0] >= 'z') {
+	if (move[0] < 'a' || move[0] > 'z') {
 		printf("error: Invalid input\n");
 		return -1;
 
 	}
-	if (move[1] <= '1' || move[1] >= '9') {
+	if (move[1] < '1' || move[1] > '9') {
 		printf("error: Invalid input\n");
 		return -1;
 	}
