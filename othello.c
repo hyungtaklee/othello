@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define BLACK_TURN 0
 #define WHITE_TURN 1
@@ -14,7 +15,7 @@
 void init_board(char board[][8], int *turn, int *skip);
 void print_board(const char board[][8], const char placeable[][8]);
 void calc_board(char board[][8], char placeable[][8], const int turn);
-int get_move(const char placeable[][8], int *is_place, int *skip);
+int get_move(const char placeable[][8], int *is_place, int *skip, int *run);
 void place_piece(char board[][8], const int place, int *turn);
 void print_winner(const char board[][8]);
 
@@ -40,6 +41,8 @@ int main(void)
 
 	printf("Enter column alphabet first, and then enter row number\n" \
 		"e.g. A4 or e7\n");
+	printf("If you want to resign the game, type gg\n");
+
 	/* 게임이 끝나면 false */
 	run = TRUE;
 	while (run) {
@@ -55,7 +58,7 @@ int main(void)
 			else {
 				printf("WHITE's turn, enter move: ");	
 			}
-			place = get_move(placeable, &is_place, &skip);
+			place = get_move(placeable, &is_place, &skip, &run);
 		}
 
 		/* 두 플레이어가 모두 놓을 자리가 없는 경우가 게임의 끝 */
@@ -69,7 +72,7 @@ int main(void)
 		}
 	}
 
-
+	print_winner(board);
 
 	return 0;
 }
@@ -118,70 +121,18 @@ void calc_board(char board[][8], char placeable[][8], const int turn)
 
 	int i, j, k, l;
 
+	int cnt; /* counts the number of enemy piece */
+
 	/* initialize board */
 	memset(placeable, 0, 64 * sizeof(char));
 
 	/* 차례가 된 플레이어의 말을 기준으로 계산 */
 	for (i = 0; i < 8; i++) {
 		for (j = 0; j < 8; j++) {
-			/* 계산하지 않을 말 */ 
-			if (board[i][j] == EMPTY_PIECE ||
-				board[i][j] == enemy_piece) {
-				continue;	
-			}
-
-			else if (board[i][j] == my_piece) {
-				int cnt = 0; /* counting enemy's pieces */
-				
+			if (board[i][j] == my_piece) {
 				/* 위쪽 방향 판별 */
+				cnt = 0;
 				for (k = i - 1, l = j; k >= 0; k--) {
-					if (board[k][l] == enemy_piece) {
-						cnt++;
-					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
-					else {
-						break;
-					}
-				}
-				/* 아래쪽 판별 */
-				cnt = 0;
-				for (k = i + 1, l = j; k < 8; k++) {
-					if (board[k][l] == enemy_piece) {
-						cnt++;
-					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
-					else {
-						break;
-					}
-				}
-				
-				/* 우측 판별 */
-				cnt = 0;
-				for (k = i, l = j + 1; j < 8; l++) {
-					if (board[k][l] == enemy_piece) {
-						cnt++;
-					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
-					else {
-						break;
-					}
-				}
-				
-				/* 좌측 판별 */
-				cnt = 0;
-				for (k = i, l = j - 1; j >= 0; l--) {
 					if (board[k][l] == enemy_piece) {
 						cnt++;
 					}
@@ -192,36 +143,73 @@ void calc_board(char board[][8], char placeable[][8], const int turn)
 						break;
 					}
 				}
-				/* 우상향 */
+				/* 아래쪽 판별 */
+				cnt = 0;
+				for (k = i + 1, l = j; k < 8; k++) {
+					if (board[k][l] == enemy_piece) {
+						cnt++;
+					}
+					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
+						break;
+					}
+				}
+				
+				/* 우측 판별 */
+				cnt = 0;
+				for (k = i, l = j + 1; l < 8; l++) {
+					if (board[k][l] == enemy_piece) {
+						cnt++;
+					}
+					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
+						break;
+					}
+				}
+				
+				/* 좌측 판별 */
+				cnt = 0;
+				for (k = i, l = j - 1; l >= 0; l--) {
+					if (board[k][l] == enemy_piece) {
+						cnt++;
+					}
+					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
+						break;
+					}
+				}
+				/* 좌하향 */
 				cnt = 0;
 				for (k = i + 1, l = j - 1; 
 					k < 8 && l >= 0; k++, l--) {
 					if (board[k][l] == enemy_piece) {
 						cnt++;
 					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
 					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
 						break;
 					}
 				}
 			
-				/* 좌하향 */
+				/* 우상향 */
 				cnt = 0;
 				for (k = i - 1, l = j + 1;
 					k >= 0 && l < 8; k--, l++)  {
 					if (board[k][l] == enemy_piece) {
 						cnt++;
 					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
 					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
 						break;
 					}
 				}
@@ -233,12 +221,10 @@ void calc_board(char board[][8], char placeable[][8], const int turn)
 					if (board[k][l] == enemy_piece) {
 						cnt++;
 					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
-							placeable[k][l] = 1;
-						break;
-					}
 					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
+							placeable[k][l] = 1;
 						break;
 					}
 				}
@@ -250,28 +236,20 @@ void calc_board(char board[][8], char placeable[][8], const int turn)
 					if (board[k][l] == enemy_piece) {
 						cnt++;
 					}
-					else if (board[k][l] == EMPTY_PIECE) {
-						if (cnt)
+					else {
+						if (board[k][l] == EMPTY_PIECE
+						    && cnt)
 							placeable[k][l] = 1;
 						break;
 					}
-					else {
-						break;
-					}
 				}
-			}
-
-			else {
-				printf("error: unknown piece data " \
-					"piece was %c, %d\n",
-					board[i][j], board[i][j]);
 			}
 		}
 	}
 
 }
 
-int get_move(const char placeable[][8], int *is_place, int *skip) {
+int get_move(const char placeable[][8], int *is_place, int *skip, int *run) {
 	char move[3];
 	int i, j;
 	int sum = 0;
@@ -295,6 +273,11 @@ int get_move(const char placeable[][8], int *is_place, int *skip) {
 	fgets(move, 3, stdin);
 	while (getchar() != '\n')
 		;
+
+	if (strcmp(move, "gg") == 0) {
+		printf("Resign\n");
+		exit(0);
+	}
 
 	/* move[0] => column, move[1] => row */
 	if (move[0] >= 'A' && move[0] <= 'Z')
@@ -330,6 +313,10 @@ void place_piece(char board[][8], const int place, int *turn)
 	const int e_piece = *turn ? BLACK_PIECE : WHITE_PIECE; 
 	const int row = place % 10;
 	const int column = place / 10;
+
+	/* skip */
+	if (place == -1)
+		return;
 
 	int i, j;
 	int is_flip, cnt;
@@ -553,7 +540,7 @@ void print_placeable(char placeable[][8])
 void print_winner(const char board[][8])
 {
 	int i, j;
-	int black, white;
+	int black = 0, white = 0;
 
 	for (i = 0; i < 8; i++) {
 		for (j = 0; j < 8; j++) {
